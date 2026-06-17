@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Alessandro. All rights reserved.
+Copyright (c) 2026 Alessandro Linzi. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Alessandro
+Authors: Alessandro Linzi
 -/
 import Mathlib.RingTheory.Valuation.Basic
 import Mathlib.RingTheory.Valuation.ValuationRing
@@ -281,7 +281,7 @@ lemma Valuation.valuation_independence
       have h_ex_mul_zero := vL.zero_iff.mp h_ex_val_zero
       cases mul_eq_zero.mp h_ex_mul_zero with
       | inl h_alg => exact hc_ex ((map_eq_zero_iff _ (algebraMap K L).injective).mp h_alg)
-      | inr h_u => 
+      | inr h_u =>
         have h_val_u := hu_val_one j_ex
         rw [h_u, Valuation.map_zero] at h_val_u
         exact zero_ne_one h_val_u
@@ -498,13 +498,13 @@ theorem Valuation.fundamentalInequality [FiniteDimensional K L] :
         intro j
         exact (Valuation.mem_valuationSubring_iff vK _).mpr (h_c_le_one j)
       let c_sub_K : Fin f → vK.valuationSubring := fun j => ⟨d j * (d j0)⁻¹, h_c_vK_le_one j⟩
-      
+
       -- j0-th coefficient is 1
       have h_c_sub_K_j0 : c_sub_K j0 = 1 := by
         ext
         change d j0 * (d j0)⁻¹ = 1
         rw [mul_inv_cancel₀ hd_j0_nz]
-      
+
       -- Map coefficients to residue field Kv
       let c_res : Fin f → Kv := fun j =>
         Ideal.Quotient.mk (IsLocalRing.maximalIdeal vK.valuationSubring) (c_sub_K j)

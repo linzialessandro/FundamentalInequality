@@ -4,15 +4,20 @@ This repository contains the formalization of the **Fundamental Inequality** for
 
 ## Mathematical Background
 
-In valuation theory, if $K$ is a field equipped with a valuation $v$ (taking values in a linearly ordered commutative group with zero $\Gamma_K$), and $L$ is a finite extension of $K$ with extended valuation $w$, we can relate the degree of the extension to two important invariants:
+In valuation theory, consider a finite extension $L|K$ of valued fields with valuation $v$. The degree of the extension $n = [L:K]$ can be related to two vital structural invariants:
 
-1. **Ramification Index**, $e(w/v)$: The index of the value group $v(K^\times)$ inside $w(L^\times)$.
-2. **Residue Degree**, $f(w/v)$: The degree of the extension of the residue field of $L$ over the residue field of $K$.
+1. **Ramification Index**, $e = e(L|K; v) := (vL : vK)$: The index of the value group of $K$ inside the value group of $L$.
+2. **Inertia Degree**, $f = f(L|K; v) := [L\bar{v} : K\bar{v}]$: The degree of the extension of the residue field of $L$ over the residue field of $K$.
 
-The **Fundamental Inequality** states that:
-$$ e(w/v) \cdot f(w/v) \le [L : K] $$
+Which are both finite in this case. The **Fundamental Inequality** states that:
+$$ [L:K] \ge (vL:vK) [L\bar{v}:K\bar{v}] $$
 
-This project formally defines these invariants and establishes this inequality for arbitrary finite extensions of valued fields.
+Or, expressed in a form which is easy to remember:
+$$ n \ge e f $$
+
+This fundamental inequality is of great importance in valuation theory. For instance, it allows us to easily observe that the extension $(L|K; v)$ is immediate if and only if $e = 1$ and $f = 1$. As a first application of the fundamental inequality, it provides the structural constraint necessary to show that important classes of valued fields (such as finitely ramified fields and formally $\mathfrak{p}$-adic fields) are closed under finite extensions.
+
+This project formally defines these invariants and establishes this inequality for arbitrary finite extensions of valued fields in Lean 4.
 
 ## Project Structure
 
