@@ -18,6 +18,12 @@ import Mathlib.LinearAlgebra.Dimension.Free
 import Mathlib.LinearAlgebra.Dimension.Finrank
 import Mathlib.LinearAlgebra.Dimension.Finite
 
+set_option linter.unusedVariables false
+set_option linter.style.longLine false
+set_option linter.style.emptyLine false
+set_option linter.unusedDecidableInType false
+set_option linter.unusedFintypeInType false
+
 
 /-!
 # Ramification Index, Residue Degree, and the Fundamental Inequality
@@ -503,7 +509,7 @@ theorem Valuation.fundamentalInequality [FiniteDimensional K L] :
       let c_res : Fin f → Kv := fun j =>
         Ideal.Quotient.mk (IsLocalRing.maximalIdeal vK.valuationSubring) (c_sub_K j)
       have h_c_res_j0 : c_res j0 = 1 := by
-        show Ideal.Quotient.mk _ (c_sub_K j0) = 1
+        change Ideal.Quotient.mk _ (c_sub_K j0) = 1
         rw [h_c_sub_K_j0, map_one]
       have h_c_sub : ∀ j, algebraMap K L (d j * (d j0)⁻¹) ∈ vL.valuationSubring := by
         intro j
@@ -554,10 +560,7 @@ theorem Valuation.fundamentalInequality [FiniteDimensional K L] :
     · rw [Valuation.map_mul, hu_val_one j0, mul_one]
     · intro j
       rw [Valuation.map_mul, hu_val_one j, mul_one, Valuation.map_mul, hu_val_one j0, mul_one]
-      -- We want vL(c_j) ≤ 1 to imply vL(c_j * (d j0)) ≤ vL(d j0).
-      -- Instead we just note that vL (algebraMap K L (d j * (d j0)⁻¹)) ≤ 1
-      -- implies vL (algebraMap K L (d j)) ≤ vL (algebraMap K L (d j0))
-      -- since vL is a group homomorphism.
+
       have h_le_one := h_c_vL_le_one j
       have hd_j0_alg_pos : 0 < vL (algebraMap K L (d j0)) :=
         lt_of_le_of_ne zero_le (Ne.symm ((Valuation.zero_iff vL).not.mpr h_alg_nz))
