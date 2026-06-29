@@ -39,11 +39,20 @@ The repository uses `lake`, the Lean 4 package manager.
 - A compatible version of Lean 4 (automatically handled by `elan` based on the `lean-toolchain` file).
 
 ### Building the Project
-To compile the project and verify the proofs, run the following from the root directory:
+
+**Important**: This project depends on `mathlib`, which is extremely large. Compiling it from scratch locally can take over an hour and may appear to hang your system.
+
+To avoid compiling `mathlib` yourself, you should **always** download the precompiled cache before building the project for the first time:
+
+```bash
+lake exe cache get
+```
+
+Once the cache is downloaded and unpacked, you can compile the project and verify the proofs by running:
 ```bash
 lake build
 ```
-This will compile the `FundamentalInequality` module and run the Lean compiler to check the integrity of all proofs. There are no `sorry` blocks in the codebase; the build compiles seamlessly and silently.
+This will quickly compile the `FundamentalInequality` module and run the Lean compiler to check the integrity of all proofs. There are no `sorry` blocks in the codebase; the build compiles seamlessly and silently.
 
 ## License
 
