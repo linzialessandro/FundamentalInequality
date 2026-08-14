@@ -124,6 +124,11 @@ theorem Valuation.ramificationIndex_self (v : Valuation K ΓK) :
   simp only [Algebra.algebraMap_self, comap_id]
   exact Subgroup.relIndex_self _
 
+/-- Restriction of a valuation along `K → L` is `HasExtension`-compatible. -/
+instance Valuation.comap_hasExtension_self :
+    (vL.comap (algebraMap K L)).HasExtension vL where
+  val_isEquiv_comap := IsEquiv.refl
+
 /-- `e(w/v)` depends only on `w` and the algebra map `K → L`, not on the
 choice of representative of `v` in its `IsEquiv`-class. -/
 theorem Valuation.ramificationIndex_eq_comap [vK.HasExtension vL] :
@@ -137,17 +142,14 @@ variable {F : Type*} [Field F] {ΓF : Type*} [LinearOrderedCommGroupWithZero ΓF
   (vF : Valuation F ΓF)
 variable [Algebra K F] [Algebra F L] [IsScalarTower K F L]
 
-/-- Restriction of a valuation along a tower is compatible with `HasExtension`. -/
-instance Valuation.comap_hasExtension_self :
-    (vL.comap (algebraMap K L)).HasExtension vL where
-  val_isEquiv_comap := IsEquiv.refl _
-
 /-- The two-step comap along `K → F → L` is `HasExtension`-compatible. -/
 instance Valuation.comap_hasExtension_comap :
     (vL.comap (algebraMap K L)).HasExtension (vL.comap (algebraMap F L)) where
   val_isEquiv_comap := by
-    rw [comap_comp, ← IsScalarTower.algebraMap_eq]
-    exact IsEquiv.refl _
+    -- `vL.comap (F → L)` is a valuation on `F`, so the `HasExtension` comap
+    -- is along `algebraMap K F`.
+    rw [← comap_comp, IsScalarTower.algebraMap_eq K F L]
+    exact IsEquiv.refl
 
 /-- The value group of a comap along a smaller field sits inside the value group
 of the comap along a larger intermediate field. -/
@@ -196,13 +198,18 @@ theorem Valuation.ramificationIndex_mul :
     ramificationIndex (vL.comap (algebraMap K L)) vL =
       ramificationIndex (vL.comap (algebraMap K L)) (vL.comap (algebraMap F L)) *
         ramificationIndex (vL.comap (algebraMap F L)) vL := by
+  have hcomap :
+      (vL.comap (algebraMap F L)).comap (algebraMap K F) =
+        vL.comap (algebraMap K L) := by
+    rw [← comap_comp, IsScalarTower.algebraMap_eq K F L]
   set A := MonoidWithZeroHom.valueGroup (vL.comap (algebraMap K L))
   set C := MonoidWithZeroHom.valueGroup (vL.comap (algebraMap F L))
   set B := MonoidWithZeroHom.valueGroup vL
   have hAC : A ≤ C := valueGroup_comap_le_valueGroup_comap (F := F) vL
   have hCB : C ≤ B := valueGroup_comap_le_valueGroup (K := F) vL
-  simpa [ramificationIndex, A, C, B] using
-    (Subgroup.relIndex_mul_relIndex hAC hCB).symm
+  unfold ramificationIndex
+  rw [hcomap]
+  exact (Subgroup.relIndex_mul_relIndex A C B hAC hCB).symm
 
 /-- In the two-valuation API, `e(w/v) = e(w/u) · [w(Fˣ) : w(Kˣ)]`. The second
 factor is `e(u/v)` computed inside `Γ_L` (see `ramificationIndex_eq_comap`). -/
@@ -221,7 +228,7 @@ instance Valuation.isScalarTower_valuationSubring
   IsScalarTower.of_algebraMap_eq fun x ↦ by
     ext
     simp only [HasExtension.coe_algebraMap_valuationSubring_eq]
-    exact (IsScalarTower.algebraMap_apply K F L _).symm
+    exact IsScalarTower.algebraMap_apply K F L _
 
 /-- Residue degree is multiplicative in towers (Kuhlmann, Lemma 6.16). The
 identity holds with the usual `finrank` convention that an infinite factor
@@ -245,8 +252,9 @@ lemma Valuation.exists_eq_val_of_sum_eq_zero
     {I : Type*} [Fintype I] [Nonempty I] (f : I → L)
     (h_sum : ∑ i, f i = 0) (h_nz : ∀ i, f i ≠ 0) :
     ∃ i j, i ≠ j ∧ vL (f i) = vL (f j) := by
+  classical
   by_contra h_dist
-  push_neg at h_dist
+  push Not at h_dist
   obtain ⟨j, hj, hj_max⟩ :=
     Finset.exists_max_image Finset.univ (fun i ↦ vL (f i)) Finset.univ_nonempty
   have h_strict : ∀ i ∈ Finset.univ \ {j}, vL (f i) < vL (f j) := by
@@ -263,14 +271,14 @@ lemma Valuation.exists_eq_val_of_sum_eq_zero
 /-- Elements whose valuations lie in pairwise distinct cosets of `vL(Kˣ)` are
 linearly independent over `K`. This is the `J = 1` case of Lemma 6.12. -/
 theorem Valuation.linearIndependent_of_val_distinct_coset
-    {I : Type*} [Fintype I] [Nonempty I] (z : I → L) (hz_nz : ∀ i, z i ≠ 0)
+    {I : Type*} [Nonempty I] (z : I → L) (hz_nz : ∀ i, z i ≠ 0)
     (hz_dist : ∀ i j, i ≠ j → ∀ c d : K, c ≠ 0 → d ≠ 0 →
       vL (algebraMap K L c * z i) ≠ vL (algebraMap K L d * z j)) :
     LinearIndependent K z := by
   rw [linearIndependent_iff']
   intro s g hg
   by_contra h_not_zero
-  push_neg at h_not_zero
+  push Not at h_not_zero
   classical
   set s_nz := s.filter (fun i ↦ g i ≠ 0) with hs_nz
   have h_snz_nonempty : s_nz.Nonempty := by
@@ -482,7 +490,8 @@ lemma Valuation.exists_max_val_of_residueIndependent
       lt_of_le_of_ne zero_le (Ne.symm ((Valuation.zero_iff vL).not.mpr h_alg_nz))
     have h_le_one' :
         vL (algebraMap K L (d j)) * (vL (algebraMap K L (d j0)))⁻¹ ≤ 1 := by
-      rw [← map_inv₀, ← map_mul]
+      rw [← map_inv₀, ← map_mul, ← map_inv₀ (algebraMap K L),
+        ← map_mul (algebraMap K L)]
       exact h_le_one
     have h_le_one'' := (mul_inv_le_iff₀ hd_j0_alg_pos).mp h_le_one'
     rwa [one_mul] at h_le_one''
@@ -493,7 +502,7 @@ lemma Valuation.exists_max_val_of_residueIndependent
 distinct value-cosets and the `u j` satisfy no-cancellation. Private helper
 for Lemma 6.12. -/
 private lemma linearIndependent_mul_of_no_cancel
-    {I J : Type*} [Fintype I] [Fintype J] [Nonempty I]
+    {I J : Type*} [Nonempty I] [Finite I] [Fintype J]
     (z : I → L) (hz_nz : ∀ i, z i ≠ 0)
     (hz_dist : ∀ i j, i ≠ j → ∀ c d : K, c ≠ 0 → d ≠ 0 →
       vL (algebraMap K L c * z i) ≠ vL (algebraMap K L d * z j))
@@ -504,10 +513,11 @@ private lemma linearIndependent_mul_of_no_cancel
         ∀ j, vL (algebraMap K L (d j) * u j) ≤
           vL (algebraMap K L (d j0) * u j0)) :
     LinearIndependent K (fun ij : I × J ↦ z ij.1 * u ij.2) := by
+  letI := Fintype.ofFinite I
   rw [Fintype.linearIndependent_iff]
   intro c hc
   by_contra h_not_zero
-  push_neg at h_not_zero
+  push Not at h_not_zero
   obtain ⟨⟨i_nz, j_nz⟩, hc_nz⟩ := h_not_zero
   let g : I → L := fun i ↦ ∑ j, algebraMap K L (c (i, j)) * u j
   have h_sum : ∑ i, z i * g i = 0 := by
@@ -545,7 +555,11 @@ private lemma linearIndependent_mul_of_no_cancel
       apply Finset.sum_subset (Finset.filter_subset _ _)
       intro i _ hi_notin
       rw [Finset.mem_filter, not_and, not_exists] at hi_notin
-      have h_all_zero : ∀ j, c (i, j) = 0 := fun j ↦ hi_notin (Finset.mem_univ i) j
+      have h_all_zero : ∀ j, c (i, j) = 0 := by
+        intro j
+        have h_no_ex := hi_notin (Finset.mem_univ i)
+        push Not at h_no_ex
+        exact h_no_ex j
       have hgi : g i = 0 :=
         Finset.sum_eq_zero fun j _ ↦ by rw [h_all_zero j, map_zero, zero_mul]
       rw [hgi, mul_zero]
@@ -636,7 +650,7 @@ linearly independent over `K`.
 (The book proves the stronger *valuation*-independence statement, of which
 linear independence is the corollary used for the fundamental inequality.) -/
 theorem Valuation.valuation_independence
-    {I J : Type*} [Fintype I] [Fintype J]
+    {I J : Type*} [Finite I] [Finite J]
     (z : I → L) (u : J → L)
     (hz_nz : ∀ i, z i ≠ 0)
     (hz_dist : ∀ i i', i ≠ i' → ∀ c d : K, c ≠ 0 → d ≠ 0 →
@@ -646,6 +660,8 @@ theorem Valuation.valuation_independence
       (IsLocalRing.ResidueField vK.valuationSubring)
       (fun j ↦ residueOfValOne vL (hu_val_one j))) :
     LinearIndependent K (fun p : I × J ↦ z p.1 * u p.2) := by
+  letI := Fintype.ofFinite I
+  letI := Fintype.ofFinite J
   rcases isEmpty_or_nonempty I with hI | hI
   · haveI : IsEmpty (I × J) := inferInstance
     exact linearIndependent_empty_type
@@ -668,8 +684,8 @@ lemma Valuation.distinct_cosets_of_quotient_out
     (hB : B = MonoidWithZeroHom.valueGroup vL)
     (eqv : B ⧸ A.comap B.subtype ≃ Fin e)
     (z : Fin e → L)
-    (hz : ∀ i, vL (z i) = ((Quotient.out (eqv.symm i) : B) : ΓL))
-    (hz_nz : ∀ i, z i ≠ 0) :
+    (hz : ∀ i, vL (z i) = ((Quotient.out (eqv.symm i)).val : ΓL))
+    (_hz_nz : ∀ i, z i ≠ 0) :
     ∀ i j, i ≠ j → ∀ c d : K, c ≠ 0 → d ≠ 0 →
       vL (algebraMap K L c * z i) ≠ vL (algebraMap K L d * z j) := by
   intro i j hij c d hc hd h_eq
@@ -779,16 +795,25 @@ theorem Valuation.finite_residueField_extension [FiniteDimensional K L] :
     exact hinf
   let n := Module.finrank K L + 1
   have hn : (n : Cardinal) ≤ Module.rank Kv Lv :=
-    (natCast_lt_aleph0 n).le.trans hrank
-  obtain ⟨b, hb⟩ := Module.exists_linearIndependent_of_le_rank hn
-  obtain ⟨u_sub, hu_sub⟩ := exists_lifts_of_residue vL b
-  have hu_val : ∀ j, vL (u_sub j : L) = 1 := fun j ↦
+    natCast_lt_aleph0.le.trans hrank
+  let b := Module.Free.chooseBasis Kv Lv
+  have hInf : Infinite (Module.Free.ChooseBasisIndex Kv Lv) := by
+    rw [← not_finite_iff_infinite]
+    intro hfin
+    exact hinf (Module.Finite.of_basis b)
+  obtain ⟨t, ht⟩ := Infinite.exists_subset_card_eq
+    (Module.Free.ChooseBasisIndex Kv Lv) n
+  let b_t : t → Lv := fun i ↦ b i.1
+  have hb_t : LinearIndependent Kv b_t :=
+    b.linearIndependent.comp _ Subtype.val_injective
+  obtain ⟨u_sub, hu_sub⟩ := exists_lifts_of_residue vL b_t
+  have hu_val : ∀ j : t, vL (u_sub j : L) = 1 := fun j ↦
     val_eq_one_of_residue_ne_zero vL (by
       rw [hu_sub]
-      exact hb.ne_zero j)
+      exact hb_t.ne_zero j)
   have hu_indep :
       LinearIndependent Kv (fun j ↦ residueOfValOne vL (hu_val j)) := by
-    have h_eq : (fun j ↦ residueOfValOne vL (hu_val j)) = b := by
+    have h_eq : (fun j ↦ residueOfValOne vL (hu_val j)) = b_t := by
       funext j
       simp only [residueOfValOne]
       rw [Subtype.coe_eta]
@@ -797,7 +822,9 @@ theorem Valuation.finite_residueField_extension [FiniteDimensional K L] :
   have hle :=
     fintype_card_le_finrank_of_residueIndependent vK vL
       (fun j ↦ (u_sub j : L)) hu_val hu_indep
-  have : n ≤ Module.finrank K L := by simpa [n] using hle
+  have : n ≤ Module.finrank K L := by
+    convert hle
+    simp [n, Fintype.card_coe, ht]
   exact (Nat.not_succ_le_self (Module.finrank K L)) this
 
 /-- The residue degree of a finite extension is positive
@@ -892,12 +919,13 @@ theorem Valuation.finite_valueGroup_quotient [FiniteDimensional K L] :
       exact Subgroup.mul_mem A h_c_in_A (Subgroup.inv_mem A h_d_in_A)
     have h_eq_out : (Quotient.mk _ (z_sub i) : Q) = Quotient.mk _ (z_sub j) :=
       QuotientGroup.eq.mpr h_z_ratio_in_A
-    have : (i : Q) = (j : Q) := by
-      simpa [z_sub, Quotient.out_eq] using h_eq_out
-    exact hij (Subtype.ext this)
-  haveI : Nonempty s := by
-    rw [← Finset.card_pos, hs]
-    exact Nat.succ_pos _
+    have hi : (Quotient.mk _ (z_sub i) : Q) = (i : Q) := Quotient.out_eq _
+    have hj : (Quotient.mk _ (z_sub j) : Q) = (j : Q) := Quotient.out_eq _
+    rw [hi, hj] at h_eq_out
+    exact hij (Subtype.ext h_eq_out)
+  have hs_ne : s.Nonempty :=
+    Finset.card_pos.mp (by rw [hs]; exact Nat.succ_pos _)
+  haveI : Nonempty s := hs_ne.to_subtype
   have hli :=
     linearIndependent_of_val_distinct_coset vL z hz_nz hz_dist
   have hcard := LinearIndependent.fintype_card_le_finrank hli
@@ -909,13 +937,9 @@ theorem Valuation.finite_valueGroup_quotient [FiniteDimensional K L] :
 (Kuhlmann, Lemma 6.13: `vL / vK` is finite, and the quotient is nonempty). -/
 theorem Valuation.ramificationIndex_ne_zero [FiniteDimensional K L] :
     ramificationIndex vK vL ≠ 0 := by
-  haveI := finite_valueGroup_quotient vK vL
-  have hcard : Nat.card
-      (MonoidWithZeroHom.valueGroup vL ⧸
-        (MonoidWithZeroHom.valueGroup (vL.comap (algebraMap K L))).comap
-          (MonoidWithZeroHom.valueGroup vL).subtype) ≠ 0 :=
-    Nat.card_ne_zero.mpr ⟨inferInstance, inferInstance⟩
-  exact hcard
+  haveI := finite_valueGroup_quotient (K := K) vL
+  rw [ramificationIndex, Subgroup.relIndex, Subgroup.index, Subgroup.subgroupOf]
+  exact Finite.card_pos.ne'
 
 /-- The ramification index of a finite extension is at least `1`. -/
 theorem Valuation.one_le_ramificationIndex [FiniteDimensional K L] :
@@ -967,7 +991,7 @@ theorem Valuation.fundamental_inequality [FiniteDimensional K L] :
   let A := MonoidWithZeroHom.valueGroup (vL.comap (algebraMap K L))
   let B := MonoidWithZeroHom.valueGroup vL
   let Q := B ⧸ A.comap B.subtype
-  haveI : Finite Q := finite_valueGroup_quotient vK vL
+  haveI : Finite Q := finite_valueGroup_quotient (K := K) vL
   haveI : Fintype Q := Fintype.ofFinite Q
   have h_card' : Fintype.card Q = e := by
     rw [← Nat.card_eq_fintype_card]
