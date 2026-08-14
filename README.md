@@ -1,59 +1,90 @@
 # Formalization of the Fundamental Inequality of Valued Fields
 
-This repository contains the formalization of the **Fundamental Inequality** for finite extensions of valued fields in Lean 4. The project is designed and structured as a direct contribution to `mathlib4`.
+Author: **Alessandro Linzi**
 
-## Mathematical Background
+This repository is a local sandbox for a `mathlib4` contribution. It formalizes
+the **simple fundamental inequality** for a finite extension of valued fields
+in Lean 4, following Kuhlmann, *Valued Fields*, Chapter 6, §6.3
+(Lemmas 6.12–6.13 and 6.16).
 
-In valuation theory, consider a finite extension $L|K$ of valued fields with valuation $v$. The degree of the extension $n = [L:K]$ can be related to two vital structural invariants:
+It is not a pull request against mathlib. The intended destination, after a
+Zulip design discussion, is a branch of a **fork of mathlib** (see `TODO.md`).
 
-1. **Ramification Index**, $e = e(L|K; v) := (vL : vK)$: The index of the value group of $K$ inside the value group of $L$.
-2. **Inertia Degree**, $f = f(L|K; v) := [L\bar{v} : K\bar{v}]$: The degree of the extension of the residue field of $L$ over the residue field of $K$.
+## Mathematical background
 
-Which are both finite in this case. The **Fundamental Inequality** states that:
-$$ [L:K] \ge (vL:vK) [L\bar{v}:K\bar{v}] $$
+Let \((L\mid K,\, w\mid v)\) be an extension of valued fields, with \(L\mid K\)
+finite. Write
 
-Or, expressed in a form which is easy to remember:
-$$ n \ge e f $$
+- \(n = [L:K]\),
+- \(e = e(w/v) = (wL : vK)\), the ramification index,
+- \(f = f(w/v) = [Lw : Kv]\), the inertia / residue degree.
 
-This fundamental inequality is of great importance in valuation theory. As an application of the fundamental inequality, it provides the structural constraint necessary to show that important classes of valued fields (such as finitely ramified fields and formally $\mathfrak{p}$-adic fields) are closed under finite extensions.
+Then \(e\) and \(f\) are finite, and
 
-This project formally defines these invariants and establishes this inequality for arbitrary finite extensions of valued fields in Lean 4.
+\[
+n \ge e\, f.
+\]
 
-## Project Structure
+This is the *single-extension* form. The Ostrowski sum \(\sum_i e_i f_i \le n\)
+over all extensions of \(v\) to \(L\), the vs-defectless characterisation
+\(n = ef\), and the comparison with Dedekind `Ideal.ramificationIdx` /
+`Ideal.inertiaDeg` are left to later work.
 
-The formalization is entirely contained within `FundamentalInequality.lean`. The file structure is explicitly flat to align with standard Mathlib architectural guidelines for component contributions.
+The argument is the standard one of Kuhlmann, Lemmas 6.12–6.13:
 
-### Main Definitions and Theorems
-- `Valuation.ramificationIndex vK vL`: The ramification index $e$.
-- `Valuation.residueDegree vK vL`: The residue degree $f$.
-- `Valuation.fundamentalInequality`: The main theorem stating `e * f ≤ Module.finrank K L`.
+1. Prove finiteness of \(e\) and \(f\) from valuation independence: an infinite
+   independent family would produce arbitrarily large \(K\)-linearly independent
+   sets, contradicting \([L:K] < \infty\).
+2. Lift a residue basis of \(Lw/Kv\) to units \(u_j \in L\) of valuation \(1\).
+3. Take representatives \(z_i \in L^\times\) of the cosets of \(vL(K^\times)\)
+   in \(vL(L^\times)\).
+4. The products \(z_i u_j\) are \(K\)-linearly independent (Lemma 6.12).
+5. Hence \(ef = \#(I \times J) \le [L:K]\).
 
-To achieve this, the repository introduces auxiliary lemmas establishing the valuation independence of field elements, such as `Valuation.linearIndependent_of_val_distinct_coset` and `Valuation.valuation_independence`.
+## Main declarations
 
-## Compilation and Usage
+All live in `FundamentalInequality.lean`, in the `Valuation` namespace.
 
-The repository uses `lake`, the Lean 4 package manager.
+| Name | Role |
+| --- | --- |
+| `residueDegree` | \(f(w/v) = [Lw : Kv]\) (`ℕ`, infinite \(\mapsto 0\)) |
+| `ramificationIndex` | \(e(w/v) = (wL : vK)\) via `comap` + `relIndex` |
+| `residueDegree_self`, `ramificationIndex_self` | identity extension: \(e = f = 1\) |
+| `residueDegree_mul`, `ramificationIndex_mul` | tower multiplicativity (Lemma 6.16) |
+| `residueDegree_pos`, `ramificationIndex_ne_zero` | finiteness under `FiniteDimensional` |
+| `valuation_independence` | Lemma 6.12 (residue form) |
+| `fundamental_inequality` | Lemma 6.13, including finiteness of \(e,f\) |
 
-### Prerequisites
-- Install [elan](https://github.com/leanprover/elan), the Lean version manager.
-- A compatible version of Lean 4 (automatically handled by `elan` based on the `lean-toolchain` file).
+`e` is computed from `valueGroup (vL.comap (algebraMap K L))` inside
+\(\Gamma_L^\times\), so it is well-defined under `HasExtension` (equivalence of
+valuations, not equality). Residue degree is `finrank` of the residue fields of
+the two `valuationSubring`s.
 
-### Building the Project
+## References
 
-**Important**: This project depends on `mathlib`, which is extremely large. Compiling it from scratch locally can take over an hour and may appear to hang your system.
+- F.-V. Kuhlmann, *Valued Fields*, Chapter 6, §6.3, Lemmas 6.12–6.13 and 6.16.
+  Local copy: `Book/bookch6.pdf` (start p. 143).
+- N. Bourbaki, *Algèbre commutative*, Chapter VI.
 
-To avoid compiling `mathlib` yourself, you should **always** download the precompiled cache before building the project for the first time:
+The older citation of Chapter 4, §4.4 was incorrect: that chapter never states
+\(n \ge ef\).
+
+## Building
+
+The repository uses `lake`. It pins mathlib `v4.30.0` for local sandbox builds
+only; a mathlib PR must target current `master`.
+
+**Always** download the precompiled cache before the first build. Compiling
+mathlib from scratch can take over an hour:
 
 ```bash
 lake exe cache get
-```
-
-Once the cache is downloaded and unpacked, you can compile the project and verify the proofs by running:
-```bash
 lake build
 ```
-This will quickly compile the `FundamentalInequality` module and run the Lean compiler to check the integrity of all proofs. There are no `sorry` blocks in the codebase; the build compiles seamlessly and silently.
+
+There are no `sorry`s. After `lake exe cache get`, `lake build` should only
+need to compile this module.
 
 ## License
 
-This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for more information.
+Apache 2.0. See [LICENSE](LICENSE).
