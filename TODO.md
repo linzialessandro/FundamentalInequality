@@ -87,11 +87,9 @@ This is the standard argument of Kuhlmann, Lemmas 6.12–6.13.
   in \(\Gamma_L\) via `IsEquiv.orderMonoidIso` (tower for `e` is the
   book's single-valuation form plus `ramificationIndex_mul_hasExtension`).
 - Immediate \(\Leftrightarrow\) \(e = f = 1\).
-- The stronger *valuation*-independence form of 6.12 (the file proves
-  \(K\)-linear independence, which is what 6.13 uses).
 
-Those last items belong in later PRs, except finiteness, which belongs
-in the first inequality PR.
+Those last items belong in later PRs. Finiteness and the valuation form
+of 6.12 are now in the sandbox file.
 
 ---
 
@@ -622,7 +620,9 @@ implementation checklist.
       using `Valuation.map_sum_eq_of_lt`).
 - [x] Lemma: distinct value-coset representatives are linearly
       independent over \(K\).
-- [x] Theorem: valuation independence in the residue form of 6.12.
+- [x] Theorem: valuation independence in the residue form of 6.12
+      (`exists_max_val_mul`; linear independence is the corollary
+      `valuation_independence`).
 - [x] Delete unused no-cancellation public API
       (`linearIndependent_of_val_no_cancel` is gone; the helper is
       private).
@@ -743,7 +743,8 @@ Declarations after the 2026-08-14 local rewrite:
 | `Valuation.ramificationIndex` | \(e\) | documented; identity / tower / ne_zero |
 | `exists_eq_val_of_sum_eq_zero` | helper | kept as lemma |
 | `linearIndependent_of_val_distinct_coset` | 6.12, \(J=1\) | used for finiteness of \(e\) |
-| `valuation_independence` | 6.12, residues | public theorem |
+| `exists_max_val_mul` | 6.12, valuation independence | public theorem |
+| `valuation_independence` | 6.12, linear independence | corollary |
 | `fundamental_inequality` | 6.13 + finiteness | no vacuous `0`-escape |
 | `fundamentalInequality` | alias | kept for the old name |
 
@@ -757,7 +758,8 @@ A PR is ready to open when all of the following hold.
 - [ ] Code lives on a branch of a **mathlib4 fork**, not this repo.
 - [x] `e` and `f` are defined, documented, and have identity / tower /
       finiteness lemmas. (local sandbox; not yet on a mathlib fork)
-- [x] Independence is Lemma 6.12 (residues, not no-cancellation).
+- [x] Independence is Lemma 6.12 (residues; valuation form
+      `exists_max_val_mul`, plus linear-independence corollary).
 - [x] `fundamental_inequality` is 6.13, including finiteness of \(e,f\).
 - [ ] No `sorry`, no unused public lemmas, `#lint` clean.
       (`sorry`-free by construction; `#lint` not run.)

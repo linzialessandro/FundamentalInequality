@@ -47,7 +47,8 @@ under `FiniteDimensional K L`.
   multiplicativity in towers (Kuhlmann, Lemma 6.16).
 * `Valuation.residueDegree_pos`, `Valuation.ramificationIndex_ne_zero` :
   finiteness of `f` and `e` for a finite extension.
-* `Valuation.valuation_independence` : Kuhlmann, Lemma 6.12.
+* `Valuation.exists_max_val_mul` : Kuhlmann, Lemma 6.12 (valuation independence).
+* `Valuation.valuation_independence` : the same products are `K`-linearly independent.
 * `Valuation.fundamental_inequality` : Kuhlmann, Lemma 6.13.
 
 ## Implementation notes
@@ -496,159 +497,202 @@ lemma Valuation.exists_max_val_of_residueIndependent
     have h_le_one'' := (mul_inv_le_iff₀ hd_j0_alg_pos).mp h_le_one'
     rwa [one_mul] at h_le_one''
 
-/-! ### Linear independence from no-cancellation (private helper) -/
+/-! ### Lemma 6.12 -/
 
-/-- Products `z i * u j` are linearly independent if the `z i` have pairwise
-distinct value-cosets and the `u j` satisfy no-cancellation. Private helper
-for Lemma 6.12. -/
-private lemma linearIndependent_mul_of_no_cancel
-    {I J : Type*} [Nonempty I] [Finite I] [Fintype J]
-    (z : I → L) (hz_nz : ∀ i, z i ≠ 0)
-    (hz_dist : ∀ i j, i ≠ j → ∀ c d : K, c ≠ 0 → d ≠ 0 →
-      vL (algebraMap K L c * z i) ≠ vL (algebraMap K L d * z j))
+/-- For each \(i\) in the support, the \(u\)-block has a distinguished coefficient
+of maximal valuation, necessarily nonzero. -/
+private lemma exists_block_max_coeff
+    {I J : Type*} [Fintype J]
     (u : J → L) (hu_val_one : ∀ j, vL (u j) = 1)
-    (hu_no_cancel : ∀ d : J → K, (∃ j, d j ≠ 0) →
-      ∃ j0, vL (∑ j, algebraMap K L (d j) * u j) =
-          vL (algebraMap K L (d j0) * u j0) ∧
-        ∀ j, vL (algebraMap K L (d j) * u j) ≤
-          vL (algebraMap K L (d j0) * u j0)) :
-    LinearIndependent K (fun ij : I × J ↦ z ij.1 * u ij.2) := by
-  letI := Fintype.ofFinite I
-  rw [Fintype.linearIndependent_iff]
-  intro c hc
-  by_contra h_not_zero
-  push Not at h_not_zero
-  obtain ⟨⟨i_nz, j_nz⟩, hc_nz⟩ := h_not_zero
+    (hu_indep : LinearIndependent
+      (IsLocalRing.ResidueField vK.valuationSubring)
+      (fun j ↦ residueOfValOne vL (hu_val_one j)))
+    (c : I × J → K) (i : I) (hi : ∃ j, c (i, j) ≠ 0) :
+    ∃ j0, c (i, j0) ≠ 0 ∧
+      vL (∑ j, algebraMap K L (c (i, j)) * u j) =
+        vL (algebraMap K L (c (i, j0))) ∧
+      ∀ j, vL (algebraMap K L (c (i, j)) * u j) ≤
+        vL (algebraMap K L (c (i, j0)) * u j0) := by
+  obtain ⟨j0, hj0_eq, hj0_le⟩ :=
+    exists_max_val_of_residueIndependent vK vL u hu_val_one hu_indep
+      (fun j ↦ c (i, j)) hi
+  have h_val_g :
+      vL (∑ j, algebraMap K L (c (i, j)) * u j) =
+        vL (algebraMap K L (c (i, j0))) := by
+    rw [hj0_eq, Valuation.map_mul, hu_val_one j0, mul_one]
+  refine ⟨j0, ?_, h_val_g, hj0_le⟩
+  intro hc_zero
+  obtain ⟨j_ex, hc_ex⟩ := hi
+  have h_ex_le := hj0_le j_ex
+  rw [hc_zero, map_zero, zero_mul, Valuation.map_zero] at h_ex_le
+  have h_ex_val_zero := le_antisymm h_ex_le zero_le
+  have h_ex_mul_zero := vL.zero_iff.mp h_ex_val_zero
+  cases mul_eq_zero.mp h_ex_mul_zero with
+  | inl h_alg =>
+    exact hc_ex ((map_eq_zero_iff _ (algebraMap K L).injective).mp h_alg)
+  | inr h_u =>
+    have h_val_u := hu_val_one j_ex
+    rw [h_u, Valuation.map_zero] at h_val_u
+    exact zero_ne_one h_val_u
+
+/-- Valuation independence of the products `z i * u j` (Kuhlmann, Lemma 6.12).
+
+If the values `vL (z i)` lie in distinct cosets of `vL(Kˣ)` and the residues of
+the units `u j` are linearly independent over `Kv`, then a nontrivial
+`K`-linear combination of the products has the same valuation as one of its
+terms of maximal valuation (multiplicative notation). -/
+theorem Valuation.exists_max_val_mul
+    {I J : Type*} [Fintype I] [Fintype J]
+    (z : I → L) (u : J → L)
+    (hz_nz : ∀ i, z i ≠ 0)
+    (hz_dist : ∀ i i', i ≠ i' → ∀ c d : K, c ≠ 0 → d ≠ 0 →
+      vL (algebraMap K L c * z i) ≠ vL (algebraMap K L d * z i'))
+    (hu_val_one : ∀ j, vL (u j) = 1)
+    (hu_indep : LinearIndependent
+      (IsLocalRing.ResidueField vK.valuationSubring)
+      (fun j ↦ residueOfValOne vL (hu_val_one j)))
+    (c : I × J → K) (hc : ∃ p, c p ≠ 0) :
+    ∃ p0, c p0 ≠ 0 ∧
+      vL (∑ p, algebraMap K L (c p) * (z p.1 * u p.2)) =
+        vL (algebraMap K L (c p0) * (z p0.1 * u p0.2)) ∧
+      ∀ p, vL (algebraMap K L (c p) * (z p.1 * u p.2)) ≤
+        vL (algebraMap K L (c p0) * (z p0.1 * u p0.2)) := by
+  classical
   let g : I → L := fun i ↦ ∑ j, algebraMap K L (c (i, j)) * u j
-  have h_sum : ∑ i, z i * g i = 0 := by
-    have h1 : ∑ ij : I × J, c ij • (z ij.1 * u ij.2) =
-        ∑ ij : I × J, algebraMap K L (c ij) * (z ij.1 * u ij.2) :=
-      Finset.sum_congr rfl fun ij _ ↦ Algebra.smul_def (c ij) (z ij.1 * u ij.2)
-    rw [h1] at hc
-    have h2 : ∑ ij : I × J, algebraMap K L (c ij) * (z ij.1 * u ij.2) =
+  have h_sum :
+      ∑ p : I × J, algebraMap K L (c p) * (z p.1 * u p.2) = ∑ i, z i * g i := by
+    have h2 : ∑ p : I × J, algebraMap K L (c p) * (z p.1 * u p.2) =
         ∑ i, ∑ j, algebraMap K L (c (i, j)) * (z i * u j) :=
       Fintype.sum_prod_type fun p : I × J ↦
         algebraMap K L (c p) * (z p.1 * u p.2)
-    rw [h2] at hc
-    have h3 : ∑ i, ∑ j, algebraMap K L (c (i, j)) * (z i * u j) =
-        ∑ i, z i * g i := by
-      refine Finset.sum_congr rfl fun i _ ↦ ?_
-      have h4 : ∑ j, algebraMap K L (c (i, j)) * (z i * u j) =
-          ∑ j, z i * (algebraMap K L (c (i, j)) * u j) :=
-        Finset.sum_congr rfl fun j _ ↦ mul_left_comm _ _ _
-      rw [h4, ← Finset.mul_sum]
-    rw [h3] at hc
-    exact hc
-  classical
-  set s_I := Finset.filter (fun i ↦ ∃ j, c (i, j) ≠ 0) Finset.univ with hs_I
-  have hs_I_nonempty : s_I.Nonempty := by
+    rw [h2]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    have h4 : ∑ j, algebraMap K L (c (i, j)) * (z i * u j) =
+        ∑ j, z i * (algebraMap K L (c (i, j)) * u j) :=
+      Finset.sum_congr rfl fun j _ ↦ mul_left_comm _ _ _
+    rw [h4, ← Finset.mul_sum]
+  set sI := Finset.univ.filter (fun i ↦ ∃ j, c (i, j) ≠ 0) with hsI
+  obtain ⟨⟨i_nz, j_nz⟩, hc_nz⟩ := hc
+  have hsI_nonempty : sI.Nonempty := by
     refine ⟨i_nz, ?_⟩
-    rw [hs_I, Finset.mem_filter]
+    rw [hsI, Finset.mem_filter]
     exact ⟨Finset.mem_univ _, ⟨j_nz, hc_nz⟩⟩
-  haveI : Nonempty s_I := hs_I_nonempty.to_subtype
-  let f : s_I → L := fun ⟨i, _⟩ ↦ z i * g i
-  have hf_sum : ∑ i : s_I, f i = 0 := by
-    have hs1 : ∑ i : s_I, f i = ∑ i ∈ s_I, z i * g i :=
-      Finset.sum_attach s_I (fun i ↦ z i * g i)
-    rw [hs1]
-    have hs2 : ∑ i ∈ s_I, z i * g i = ∑ i ∈ Finset.univ, z i * g i := by
-      apply Finset.sum_subset (Finset.filter_subset _ _)
-      intro i _ hi_notin
-      rw [Finset.mem_filter, not_and, not_exists] at hi_notin
-      have h_all_zero : ∀ j, c (i, j) = 0 := by
-        intro j
-        have h_no_ex := hi_notin (Finset.mem_univ i)
-        push Not at h_no_ex
-        exact h_no_ex j
-      have hgi : g i = 0 :=
-        Finset.sum_eq_zero fun j _ ↦ by rw [h_all_zero j, map_zero, zero_mul]
-      rw [hgi, mul_zero]
-    rw [hs2]
-    exact h_sum
-  have hf_nz : ∀ i : s_I, f i ≠ 0 := by
-    intro ⟨i, hi⟩
-    have hi_prop : i ∈ s_I := hi
-    rw [hs_I, Finset.mem_filter] at hi_prop
-    obtain ⟨j_ex, hc_ex⟩ := hi_prop.2
-    obtain ⟨j0, hj0_eq, hj0_le⟩ := hu_no_cancel (fun j ↦ c (i, j)) ⟨j_ex, hc_ex⟩
-    have h_val_g : vL (g i) = vL (algebraMap K L (c (i, j0))) := by
-      rw [hj0_eq, Valuation.map_mul, hu_val_one j0, mul_one]
-    have h_c_nz : c (i, j0) ≠ 0 := by
-      intro hc_zero
-      have h_ex_le := hj0_le j_ex
-      rw [hc_zero, map_zero, zero_mul, Valuation.map_zero] at h_ex_le
-      have h_ex_val_zero := le_antisymm h_ex_le zero_le
-      have h_ex_mul_zero := vL.zero_iff.mp h_ex_val_zero
-      cases mul_eq_zero.mp h_ex_mul_zero with
-      | inl h_alg =>
-        exact hc_ex ((map_eq_zero_iff _ (algebraMap K L).injective).mp h_alg)
-      | inr h_u =>
-        have h_val_u := hu_val_one j_ex
-        rw [h_u, Valuation.map_zero] at h_val_u
-        exact zero_ne_one h_val_u
-    have h_g_nz : g i ≠ 0 := by
-      intro hg_zero
-      have h_vL_g : vL (g i) = 0 := by rw [hg_zero, Valuation.map_zero]
-      rw [h_vL_g] at h_val_g
-      have h_alg_zero := vL.zero_iff.mp h_val_g.symm
-      exact h_c_nz ((map_eq_zero_iff _ (algebraMap K L).injective).mp h_alg_zero)
-    exact mul_ne_zero (hz_nz i) h_g_nz
-  obtain ⟨⟨i1, hi1⟩, ⟨i2, hi2⟩, hi12, hval⟩ :=
-    exists_eq_val_of_sum_eq_zero vL f hf_sum hf_nz
-  have hi1_prop : i1 ∈ s_I := hi1
-  have hi2_prop : i2 ∈ s_I := hi2
-  rw [hs_I, Finset.mem_filter] at hi1_prop hi2_prop
-  obtain ⟨j1_ex, hc1_ex⟩ := hi1_prop.2
-  obtain ⟨j2_ex, hc2_ex⟩ := hi2_prop.2
-  obtain ⟨j1_0, hj1_eq, _⟩ := hu_no_cancel (fun j ↦ c (i1, j)) ⟨j1_ex, hc1_ex⟩
-  obtain ⟨j2_0, hj2_eq, _⟩ := hu_no_cancel (fun j ↦ c (i2, j)) ⟨j2_ex, hc2_ex⟩
-  have h_val_g1 : vL (g i1) = vL (algebraMap K L (c (i1, j1_0))) := by
-    rw [hj1_eq, Valuation.map_mul, hu_val_one j1_0, mul_one]
-  have h_val_g2 : vL (g i2) = vL (algebraMap K L (c (i2, j2_0))) := by
-    rw [hj2_eq, Valuation.map_mul, hu_val_one j2_0, mul_one]
-  have h_c1_nz : c (i1, j1_0) ≠ 0 := by
-    intro hc_zero
-    have h_v_zero : vL (g i1) = 0 := by
-      rw [h_val_g1, hc_zero, map_zero, Valuation.map_zero]
-    have h_g_zero : g i1 = 0 := vL.zero_iff.mp h_v_zero
-    have h_f_nz := hf_nz ⟨i1, hi1⟩
-    have h_f_eq : f ⟨i1, hi1⟩ = 0 := by
-      change z i1 * g i1 = 0
-      rw [h_g_zero, mul_zero]
-    exact h_f_nz h_f_eq
-  have h_c2_nz : c (i2, j2_0) ≠ 0 := by
-    intro hc_zero
-    have h_v_zero : vL (g i2) = 0 := by
-      rw [h_val_g2, hc_zero, map_zero, Valuation.map_zero]
-    have h_g_zero : g i2 = 0 := vL.zero_iff.mp h_v_zero
-    have h_f_nz := hf_nz ⟨i2, hi2⟩
-    have h_f_eq : f ⟨i2, hi2⟩ = 0 := by
-      change z i2 * g i2 = 0
-      rw [h_g_zero, mul_zero]
-    exact h_f_nz h_f_eq
-  have hval' :
-      vL (algebraMap K L (c (i1, j1_0)) * z i1) =
-        vL (algebraMap K L (c (i2, j2_0)) * z i2) := by
-    change vL (z i1 * g i1) = vL (z i2 * g i2) at hval
-    rw [Valuation.map_mul, Valuation.map_mul] at hval
-    rw [h_val_g1, h_val_g2] at hval
-    rw [mul_comm (vL (z i1)), mul_comm (vL (z i2))] at hval
-    rw [← Valuation.map_mul, ← Valuation.map_mul] at hval
-    exact hval
-  have hij' : i1 ≠ i2 := fun h ↦ hi12 (Subtype.ext h)
-  exact hz_dist i1 i2 hij' (c (i1, j1_0)) (c (i2, j2_0)) h_c1_nz h_c2_nz hval'
+  have h_g_data : ∀ i ∈ sI, ∃ j0, c (i, j0) ≠ 0 ∧
+      vL (g i) = vL (algebraMap K L (c (i, j0))) ∧
+      ∀ j, vL (algebraMap K L (c (i, j)) * u j) ≤
+        vL (algebraMap K L (c (i, j0)) * u j0) := by
+    intro i hi
+    rw [hsI, Finset.mem_filter] at hi
+    exact exists_block_max_coeff vK vL u hu_val_one hu_indep c i hi.2
+  have h_g_nz : ∀ i ∈ sI, g i ≠ 0 := by
+    intro i hi
+    obtain ⟨j0, hj0_nz, hval, _⟩ := h_g_data i hi
+    intro hg0
+    have : vL (g i) = 0 := by rw [hg0, Valuation.map_zero]
+    rw [this] at hval
+    exact hj0_nz ((map_eq_zero_iff _ (algebraMap K L).injective).mp
+      (vL.zero_iff.mp hval.symm))
+  have val_term (i : I) (j : J) :
+      vL (algebraMap K L (c (i, j)) * (z i * u j)) =
+        vL (algebraMap K L (c (i, j)) * z i) := by
+    rw [← mul_assoc, Valuation.map_mul, hu_val_one j, mul_one]
+  have val_coeff_of_le {i : I} {j j' : J}
+      (hle : vL (algebraMap K L (c (i, j)) * u j) ≤
+        vL (algebraMap K L (c (i, j')) * u j')) :
+      vL (algebraMap K L (c (i, j))) ≤ vL (algebraMap K L (c (i, j'))) := by
+    rw [Valuation.map_mul, Valuation.map_mul, hu_val_one j, hu_val_one j',
+      mul_one, mul_one] at hle
+    exact hle
+  have h_block_val : ∀ i ∈ sI, ∀ j0,
+      c (i, j0) ≠ 0 →
+        (∀ j, vL (algebraMap K L (c (i, j)) * u j) ≤
+          vL (algebraMap K L (c (i, j0)) * u j0)) →
+        vL (z i * g i) = vL (algebraMap K L (c (i, j0)) * (z i * u j0)) := by
+    intro i hi j0 _hj0_nz hj0_le
+    obtain ⟨j1, _hj1_nz, hval, hj1_le⟩ := h_g_data i hi
+    have hzi : vL (z i * g i) = vL (algebraMap K L (c (i, j1)) * z i) := by
+      rw [Valuation.map_mul, hval, mul_comm (vL (z i)), ← Valuation.map_mul]
+    have h_eq_coeff :
+        vL (algebraMap K L (c (i, j0))) = vL (algebraMap K L (c (i, j1))) :=
+      le_antisymm (val_coeff_of_le (hj1_le j0)) (val_coeff_of_le (hj0_le j1))
+    rw [hzi, val_term, Valuation.map_mul, Valuation.map_mul, h_eq_coeff]
+  obtain ⟨i0, hi0_mem, hi0_max⟩ :=
+    Finset.exists_max_image sI (fun i ↦ vL (z i * g i)) hsI_nonempty
+  obtain ⟨j0, hj0_nz, hval_i0, hj0_le⟩ := h_g_data i0 hi0_mem
+  have h_max_pos : 0 < vL (z i0 * g i0) := by
+    have hnz : z i0 * g i0 ≠ 0 := mul_ne_zero (hz_nz i0) (h_g_nz i0 hi0_mem)
+    exact lt_of_le_of_ne zero_le (Ne.symm ((Valuation.zero_iff vL).not.mpr hnz))
+  have h_strict : ∀ i ∈ Finset.univ \ {i0},
+      vL (z i * g i) < vL (z i0 * g i0) := by
+    intro i hi
+    rw [Finset.mem_sdiff, Finset.mem_singleton] at hi
+    by_cases hsup : i ∈ sI
+    · have hle := hi0_max i hsup
+      have hne : vL (z i * g i) ≠ vL (z i0 * g i0) := by
+        obtain ⟨ji, hji_nz, hval_i, hji_le⟩ := h_g_data i hsup
+        have hi_eq := h_block_val i hsup ji hji_nz hji_le
+        have hi0_eq := h_block_val i0 hi0_mem j0 hj0_nz hj0_le
+        rw [hi_eq, hi0_eq, val_term, val_term]
+        exact hz_dist i i0 hi.2 (c (i, ji)) (c (i0, j0)) hji_nz hj0_nz
+      exact lt_of_le_of_ne hle hne
+    · have hgi : g i = 0 := by
+        apply Finset.sum_eq_zero
+        intro j _
+        have : c (i, j) = 0 := by
+          rw [hsI, Finset.mem_filter, not_and, not_exists] at hsup
+          have h_no := hsup (Finset.mem_univ i)
+          push Not at h_no
+          exact h_no j
+        rw [this, map_zero, zero_mul]
+      rw [hgi, mul_zero, Valuation.map_zero]
+      exact h_max_pos
+  have h_val_sum :
+      vL (∑ p, algebraMap K L (c p) * (z p.1 * u p.2)) = vL (z i0 * g i0) := by
+    rw [h_sum]
+    exact Valuation.map_sum_eq_of_lt vL (Finset.mem_univ i0) h_strict
+  refine ⟨(i0, j0), hj0_nz, ?_, ?_⟩
+  · rw [h_val_sum]
+    exact h_block_val i0 hi0_mem j0 hj0_nz hj0_le
+  · intro p
+    have hp_le_block :
+        vL (algebraMap K L (c p) * (z p.1 * u p.2)) ≤ vL (z p.1 * g p.1) := by
+      by_cases hpz : c p = 0
+      · rw [hpz, map_zero, zero_mul, Valuation.map_zero]
+        exact zero_le
+      · have hp_mem : p.1 ∈ sI := by
+          rw [hsI, Finset.mem_filter]
+          exact ⟨Finset.mem_univ _, ⟨p.2, hpz⟩⟩
+        obtain ⟨ji, hji_nz, hval_i, hji_le⟩ := h_g_data p.1 hp_mem
+        have hle := val_coeff_of_le (hji_le p.2)
+        calc vL (algebraMap K L (c p) * (z p.1 * u p.2))
+            _ = vL (algebraMap K L (c (p.1, p.2)) * z p.1) := val_term p.1 p.2
+            _ = vL (algebraMap K L (c (p.1, p.2))) * vL (z p.1) :=
+                  Valuation.map_mul _ _ _
+            _ ≤ vL (algebraMap K L (c (p.1, ji))) * vL (z p.1) :=
+                  mul_le_mul_of_nonneg_right hle zero_le
+            _ = vL (g p.1) * vL (z p.1) := by rw [hval_i]
+            _ = vL (z p.1 * g p.1) := by rw [mul_comm, ← Valuation.map_mul]
+    have h_block_le : vL (z p.1 * g p.1) ≤ vL (z i0 * g i0) := by
+      by_cases hsup : p.1 ∈ sI
+      · exact hi0_max p.1 hsup
+      · have hgi : g p.1 = 0 := by
+          apply Finset.sum_eq_zero
+          intro j _
+          have : c (p.1, j) = 0 := by
+            rw [hsI, Finset.mem_filter, not_and, not_exists] at hsup
+            have h_no := hsup (Finset.mem_univ p.1)
+            push Not at h_no
+            exact h_no j
+          rw [this, map_zero, zero_mul]
+        rw [hgi, mul_zero, Valuation.map_zero]
+        exact zero_le
+    have hi0_eq := h_block_val i0 hi0_mem j0 hj0_nz hj0_le
+    calc vL (algebraMap K L (c p) * (z p.1 * u p.2))
+        _ ≤ vL (z p.1 * g p.1) := hp_le_block
+        _ ≤ vL (z i0 * g i0) := h_block_le
+        _ = vL (algebraMap K L (c (i0, j0)) * (z i0 * u j0)) := hi0_eq
 
-/-! ### Lemma 6.12 -/
-
-/-- Valuation independence (Kuhlmann, Lemma 6.12).
-
-If the values `vL (z i)` lie in distinct cosets of `vL(Kˣ)` in `vL(Lˣ)`, and the
-`u j` are units of the valuation ring of `vL` whose residues are linearly
-independent over the residue field of `vK`, then the products `z i * u j` are
-linearly independent over `K`.
-
-(The book proves the stronger *valuation*-independence statement, of which
-linear independence is the corollary used for the fundamental inequality.) -/
+/-- Linear independence of the products `z i * u j` (corollary of Lemma 6.12). -/
 theorem Valuation.valuation_independence
     {I J : Type*} [Finite I] [Finite J]
     (z : I → L) (u : J → L)
@@ -662,16 +706,29 @@ theorem Valuation.valuation_independence
     LinearIndependent K (fun p : I × J ↦ z p.1 * u p.2) := by
   letI := Fintype.ofFinite I
   letI := Fintype.ofFinite J
-  rcases isEmpty_or_nonempty I with hI | hI
-  · haveI : IsEmpty (I × J) := inferInstance
-    exact linearIndependent_empty_type
-  rcases isEmpty_or_nonempty J with hJ | hJ
-  · haveI : IsEmpty (I × J) := inferInstance
-    exact linearIndependent_empty_type
-  have hu_no_cancel :=
-    exists_max_val_of_residueIndependent vK vL u hu_val_one hu_indep
-  exact linearIndependent_mul_of_no_cancel vL z hz_nz hz_dist u hu_val_one
-    hu_no_cancel
+  rw [Fintype.linearIndependent_iff]
+  intro c hc
+  by_contra h_not_zero
+  push Not at h_not_zero
+  obtain ⟨p0, hp0_nz, hp0_eq, hp0_le⟩ :=
+    exists_max_val_mul vK vL z u hz_nz hz_dist hu_val_one hu_indep c h_not_zero
+  have h_sum : ∑ p, algebraMap K L (c p) * (z p.1 * u p.2) = 0 := by
+    have h_smul : ∑ p, algebraMap K L (c p) * (z p.1 * u p.2) =
+        ∑ p, c p • (z p.1 * u p.2) :=
+      Finset.sum_congr rfl fun p _ ↦ (Algebra.smul_def (c p) (z p.1 * u p.2)).symm
+    rw [h_smul, hc]
+  rw [h_sum, Valuation.map_zero] at hp0_eq
+  have h_term_zero :
+      vL (algebraMap K L (c p0) * (z p0.1 * u p0.2)) = 0 := by
+    exact le_antisymm (hp0_eq ▸ hp0_le p0) zero_le
+  have h_mul_zero := vL.zero_iff.mp h_term_zero
+  rcases (mul_eq_zero.mp h_mul_zero) with h_alg | h_zu
+  · exact hp0_nz ((map_eq_zero_iff _ (algebraMap K L).injective).mp h_alg)
+  · rcases (mul_eq_zero.mp h_zu) with h_z | h_u
+    · exact hz_nz p0.1 h_z
+    · have h1 := hu_val_one p0.2
+      rw [h_u, Valuation.map_zero] at h1
+      exact zero_ne_one h1
 
 /-! ### Coset representatives and residue bases -/
 
