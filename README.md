@@ -1,89 +1,77 @@
-# Formalization of the Fundamental Inequality of Valued Fields
+# Fundamental inequality for valuative field extensions
 
 Author: **Alessandro Linzi**
 
-This repository is a local sandbox for a `mathlib4` contribution. It formalizes
-the **simple fundamental inequality** for a finite extension of valued fields
-in Lean 4, following Kuhlmann, *Valued Fields*, Chapter 6, §6.3
-(Lemmas 6.12–6.13 and 6.16).
+This repository formalizes the simple fundamental inequality for a finite
+extension of valued fields in Lean 4. The statements live in
+`FundamentalInequality.lean`, in the `ValuativeExtension` namespace, on top of
+Mathlib's `ValuativeRel` / `ValuativeExtension` / `ValueGroupWithZero` API.
 
-It is not a pull request against mathlib. The intended destination, after a
-Zulip design discussion, is a branch of a **fork of mathlib** (see `TODO.md`).
+The development is a sandbox aimed at a Tau Ceti roadmap node. A draft of that
+node is `ROADMAP_NODE.md`. Nothing in this repository is a pull request against
+Mathlib or against Tau Ceti.
 
-## Mathematical background
+## Statement
 
-Let \((L\mid K,\, w\mid v)\) be an extension of valued fields, with \(L\mid K\)
-finite. Write
-
-- \(n = [L:K]\),
-- \(e = e(w/v) = (wL : vK)\), the ramification index,
-- \(f = f(w/v) = [Lw : Kv]\), the inertia / residue degree.
-
-Then \(e\) and \(f\) are finite, and
+For a finite extension `L/K` of fields carrying valuative relations, with
+`ValuativeExtension K L`,
 
 \[
-n \ge e\, f.
+  e(L/K)\, f(L/K) \le [L:K].
 \]
 
-This is the *single-extension* form. The Ostrowski sum \(\sum_i e_i f_i \le n\)
-over all extensions of \(v\) to \(L\), the vs-defectless characterisation
-\(n = ef\), and the comparison with Dedekind `Ideal.ramificationIdx` /
-`Ideal.inertiaDeg` are left to later work.
+Both factors are finite (recorded as positive natural numbers). Here
 
-The argument is the standard one of Kuhlmann, Lemmas 6.12–6.13:
+- `residueDegree K L` is `Module.finrank 𝓀[K] 𝓀[L]`,
+- `ramificationIndex K L` is the subgroup index of the image of
+  `(ValueGroupWithZero K)ˣ` under `mapValueGroupWithZero K L`.
 
-1. Prove finiteness of \(e\) and \(f\) from valuation independence: an infinite
-   independent family would produce arbitrarily large \(K\)-linearly independent
-   sets, contradicting \([L:K] < \infty\).
-2. Lift a residue basis of \(Lw/Kv\) to units \(u_j \in L\) of valuation \(1\).
-3. Take representatives \(z_i \in L^\times\) of the cosets of \(vL(K^\times)\)
-   in \(vL(L^\times)\).
-4. The products \(z_i u_j\) are \(K\)-linearly independent (Lemma 6.12).
-5. Hence \(ef = \#(I \times J) \le [L:K]\).
+An infinite index or an infinite residue extension is recorded as `0`, matching
+`Subgroup.index` and `Module.finrank`.
 
 ## Main declarations
 
-All live in `FundamentalInequality.lean`, in the `Valuation` namespace.
-
 | Name | Role |
 | --- | --- |
-| `residueDegree` | \(f(w/v) = [Lw : Kv]\) (`ℕ`, infinite \(\mapsto 0\)) |
-| `ramificationIndex` | \(e(w/v) = (wL : vK)\) via `comap` + `relIndex` |
-| `residueDegree_self`, `ramificationIndex_self` | identity extension: \(e = f = 1\) |
-| `residueDegree_mul`, `ramificationIndex_mul` | tower multiplicativity (Lemma 6.16) |
-| `residueDegree_pos`, `ramificationIndex_ne_zero` | finiteness under `FiniteDimensional` |
-| `valuation_independence` | Lemma 6.12 (residue form) |
-| `fundamental_inequality` | Lemma 6.13, including finiteness of \(e,f\) |
+| `residueDegree`, `ramificationIndex` | `f(L/K)` and `e(L/K)` |
+| `IsImmediate` | value group and residue field both stay the same |
+| `residueDegree_self`, `ramificationIndex_self` | identity extension: `e = f = 1` |
+| `residueDegree_mul`, `ramificationIndex_mul` | multiplicativity in a tower |
+| `isImmediate_iff_ramificationIndex_eq_one_and_residueDegree_eq_one` | immediate iff `e = f = 1` |
+| `exists_max_val_mul`, `valuation_independence` | Kuhlmann's Lemma 6.12 |
+| `finite_residueField_extension`, `finite_valueGroup_quotient` | finiteness |
+| `fundamental_inequality` | Kuhlmann's Lemma 6.13 |
 
-`e` is computed from `valueGroup (vL.comap (algebraMap K L))` inside
-\(\Gamma_L^\times\), so it is well-defined under `HasExtension` (equivalence of
-valuations, not equality). Residue degree is `finrank` of the residue fields of
-the two `valuationSubring`s.
+The middle factor of `ramificationIndex_mul` is `ramificationIndex K F`, the
+index in `(ValueGroupWithZero F)ˣ`, transported into `(ValueGroupWithZero L)ˣ`
+along `mapValueGroupWithZero F L` by `Subgroup.index_map_of_injective`.
+
+## Scope
+
+The file proves the inequality for one valuative extension. It does not prove
+Ostrowski's sum over several extensions of one valuation, the defect, equality
+in the defectless case, or a comparison with `Ideal.ramificationIdx` and
+`Ideal.inertiaDeg`. The equality `e f = [L:K]` for finite extensions of
+nonarchimedean local fields is `TauCeti.ramificationIndex_mul_inertiaDegree`,
+owned by the local-fields roadmap, and is not restated here.
 
 ## References
 
-- F.-V. Kuhlmann, *Valued Fields*, Chapter 6, §6.3, Lemmas 6.12–6.13 and 6.16.
-  Local copy: `Book/bookch6.pdf` (start p. 143).
-- N. Bourbaki, *Algèbre commutative*, Chapter VI.
-
-The older citation of Chapter 4, §4.4 was incorrect: that chapter never states
-\(n \ge ef\).
+- Franz-Viktor Kuhlmann, *Valuation Theory*, book in preparation. Unfinished
+  draft, available only at <https://www.fvkuhlmann.de/Fvkbook.htm>. Chapter 6,
+  §6.3, Lemmas 6.12, 6.13 and 6.16, and Definition 6.1 for immediate extensions.
+- N. Bourbaki, *Commutative Algebra*, Chapters 1–7, Chapter VI.
+  Bibliography keys: `docs/references.bib`.
 
 ## Building
-
-The repository uses `lake`. It pins mathlib `v4.30.0` for local sandbox builds
-only; a mathlib PR must target current `master`.
-
-**Always** download the precompiled cache before the first build. Compiling
-mathlib from scratch can take over an hour:
 
 ```bash
 lake exe cache get
 lake build
 ```
 
-There are no `sorry`s. After `lake exe cache get`, `lake build` should only
-need to compile this module.
+The toolchain is Lean `v4.36.0-rc1`. Mathlib is pinned to commit
+`7bb03b4c5313d552989ba5b1c6d3f0f436f65d73`. There are no `sorry`s.
 
 ## License
 
