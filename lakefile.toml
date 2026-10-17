@@ -12,7 +12,7 @@ maxSynthPendingDepth = 3
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.30.0"
+rev = "7bb03b4c5313d552989ba5b1c6d3f0f436f65d73"
 
 [[lean_lib]]
 name = "FundamentalInequality"
