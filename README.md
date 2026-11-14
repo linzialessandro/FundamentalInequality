@@ -63,6 +63,10 @@ owned by the local-fields roadmap, and is not restated here.
 - N. Bourbaki, *Commutative Algebra*, Chapters 1–7, Chapter VI.
   Bibliography keys: `docs/references.bib`.
 
+## Examples
+
+`Examples/` holds a worked Artin–Schreier example (`lake build Examples`): uniqueness of the extension, `e = f = 1` and `[L:K] = 2`, so the Ostrowski sum is strict. The polynomial lemmas hold for every prime `p`, but irreducibility and the valued construction are currently limited to `p = 2`.
+
 ## Building
 
 ```bash

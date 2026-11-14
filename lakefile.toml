@@ -16,3 +16,9 @@ rev = "7bb03b4c5313d552989ba5b1c6d3f0f436f65d73"
 
 [[lean_lib]]
 name = "FundamentalInequality"
+
+# Example modules live under Examples/ and are not part of the default library target.
+# Examples.Audit is deliberately not a root: it is an axiom-audit script, not a library module.
+[[lean_lib]]
+name = "Examples"
+roots = ["Examples.ArtinSchreier", "Examples.Bridge", "Examples.ArtinSchreierDefect"]
