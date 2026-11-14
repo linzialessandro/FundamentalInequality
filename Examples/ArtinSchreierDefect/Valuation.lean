@@ -254,7 +254,7 @@ open scoped ValuativeRel BigOperators
 
 /-- Every compatible valuative relation on the quadratic extension equals the
 spectral one. -/
-theorem unique_all (w : Extensions Hull Extension) :
+theorem extension_eq_spectral (w : Extensions Hull Extension) :
     w.val = extensionValuativeRel :=
   unique_extension w.val w.property
 

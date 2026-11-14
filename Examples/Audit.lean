@@ -66,7 +66,7 @@ It must not appear among the `Examples` library roots in `lakefile.toml`.
 #print axioms ArtinSchreierDefect.QuadraticExtension
 #print axioms ArtinSchreierDefect.quadratic_degree
 #print axioms ArtinSchreierDefect.quadratic_root_equation
-#print axioms ArtinSchreierDefect.defectQuotient
+#print axioms ArtinSchreierDefect.finrankQuotient
 #print axioms ArtinSchreierDefect.defect_of_immediate
 #print axioms ArtinSchreierDefect.quadratic_defect_quotient
 #print axioms ArtinSchreierDefect.Quadratic.Base
@@ -101,7 +101,7 @@ It must not appear among the `Examples` library roots in `lakefile.toml`.
 #print axioms ArtinSchreierDefect.Quadratic.exp_one_ne_one
 #print axioms ArtinSchreierDefect.Quadratic.baseIsNontrivial
 #print axioms ArtinSchreierDefect.Quadratic.base_vle_iff_norm
-#print axioms ArtinSchreierDefect.Quadratic.unique_all
+#print axioms ArtinSchreierDefect.Quadratic.extension_eq_spectral
 #print axioms ArtinSchreierDefect.Quadratic.baseCompatible
 #print axioms ArtinSchreierDefect.Quadratic.extensionCompatible
 #print axioms ArtinSchreierDefect.Quadratic.hullPerfect

@@ -729,14 +729,14 @@ Artin–Schreier extension.
 Uniqueness of the valuative relation, ramification index one, and residue
 degree one are all proved. Consequently `Σ eᵢfᵢ = ef = 1 < 2 = [L:K]`. -/
 theorem quadratic_sum_strict :
-    let := extensionFintype_of_unique Hull Extension unique_all
+    let := extensionFintype_of_unique Hull Extension extension_eq_spectral
     (∑ w : Extensions Hull Extension, extensionWeight w) =
       ramificationIndex Hull Extension * residueDegree Hull Extension ∧
     ramificationIndex Hull Extension * residueDegree Hull Extension = 1 ∧
     (∑ w : Extensions Hull Extension, extensionWeight w) < 2 ∧
     2 = Module.finrank Hull Extension := by
-  let := extensionFintype_of_unique Hull Extension unique_all
-  exact sum_strict_of_unique_immediate Hull Extension unique_all 2 (by decide)
+  let := extensionFintype_of_unique Hull Extension extension_eq_spectral
+  exact sum_strict_of_unique_immediate Hull Extension extension_eq_spectral 2 (by decide)
     concrete_ramificationIndex concrete_residueDegree
     ArtinSchreierDefect.quadratic_degree
 
@@ -749,18 +749,18 @@ open Quadratic
 open scoped ValuativeRel
 
 /-- A numerical quotient, not a general theorem about defect integrality. -/
-def defectQuotient (n e f : ℕ) : ℕ := n / (e * f)
+def finrankQuotient (n e f : ℕ) : ℕ := n / (e * f)
 
 theorem defect_of_immediate (n e f q : ℕ) (hn : n = q) (he : e = 1) (hf : f = 1) :
-    defectQuotient n e f = q ∧ n = defectQuotient n e f * e * f := by
-  simp [defectQuotient, hn, he, hf]
+    finrankQuotient n e f = q ∧ n = finrankQuotient n e f * e * f := by
+  simp [finrankQuotient, hn, he, hf]
 
 /-- Arithmetic consequence of the proved identities `e = 1`, `f = 1`, and `[L:K] = 2`. -/
 theorem quadratic_defect_quotient :
-    defectQuotient (Module.finrank Quadratic.Hull Quadratic.Extension)
+    finrankQuotient (Module.finrank Quadratic.Hull Quadratic.Extension)
       (ramificationIndex Quadratic.Hull Quadratic.Extension)
       (residueDegree Quadratic.Hull Quadratic.Extension) = 2 := by
-  simp [defectQuotient, quadratic_degree, Quadratic.concrete_ramificationIndex,
+  simp [finrankQuotient, quadratic_degree, Quadratic.concrete_ramificationIndex,
     Quadratic.concrete_residueDegree]
 
 end ArtinSchreierDefect
