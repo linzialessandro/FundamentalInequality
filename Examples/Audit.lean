@@ -31,6 +31,11 @@ It must not appear among the `Examples` library roots in `lakefile.toml`.
 #print axioms ValuativeExtension.instIsLocalHomInteger
 #print axioms ValuativeExtension.instIsScalarTowerInteger
 #print axioms ValuativeExtension.instNormalUnitsValueGroupWithZero
+#print axioms ValuativeExtension.pow_ramificationIdx_le_mul_uniformizer
+#print axioms ValuativeExtension.eventually_pow_mul_uniformizer_lt
+#print axioms ValuativeExtension.exists_sub_val_lt
+#print axioms ValuativeExtension.span_eq_top_of_completeSpace
+#print axioms ValuativeExtension.ramificationIdx_mul_inertiaDeg_eq_finrank
 #print axioms ArtinSchreier.polynomial
 #print axioms ArtinSchreier.eval_polynomial
 #print axioms ArtinSchreier.derivative_polynomial
@@ -189,3 +194,5 @@ It must not appear among the `Examples` library roots in `lakefile.toml`.
 #print axioms PadicSqrtP.ramificationIdx_eq_two
 #print axioms PadicSqrtP.inertiaDeg_eq_one
 #print axioms PadicSqrtP.ramificationIdx_mul_inertiaDeg_eq_finrank
+#print axioms PadicSqrtP.stage3_ramificationIdx_mul_inertiaDeg_eq_finrank
+#print axioms PadicSqrtP.inertiaDeg_eq_one_from_stage3

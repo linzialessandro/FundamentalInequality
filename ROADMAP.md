@@ -2,8 +2,9 @@
 
 This file plans how the repository grows from the fundamental inequality into
 a larger body of valuation theory intended for Mathlib. It is a plan, not a
-record of finished work: Stages 1 and 2 are done. The long-term target is the
-theory of the defect and of tame extensions, following Kuhlmann's book.
+record of finished work: Stages 1 and 2, and the equality part of Stage 3, are
+done. The long-term target is the theory of the defect and of tame extensions,
+following Kuhlmann's book.
 
 Two rules hold for every stage.
 
@@ -38,7 +39,7 @@ Difficulty: **S** (a few hundred lines), **M** (one substantial file),
 | --- | --- | --- | --- |
 | 1 | `e`, `f`, towers, fundamental inequality; Artin–Schreier defect example for every prime | done | — |
 | 2 | Contrast example `ℚ_p(√p)`: `e = 2`, `f = 1`, `e f = [L:K]` | done | M |
-| 3 | Defectless equality `e f = [L:K]` over complete discretely valued fields | next | L |
+| 3 | Defectless equality `e f = [L:K]` over complete discretely valued fields | done (equality) | L |
 | 4 | Henselian valued fields: uniqueness of extension, henselization (Kuhlmann §7.8, Ch. 9) | planned | XL |
 | 5 | Ostrowski's sum `∑ eᵢ fᵢ ≤ [L:K]` over all extensions (Kuhlmann §7.9) | planned | L |
 | 6 | Defect: definition, defectless extensions and fields, Lemma of Ostrowski (Kuhlmann Ch. 11) | planned | L–XL |
@@ -97,7 +98,7 @@ Difficulty: **S** (a few hundred lines), **M** (one substantial file),
 - **Role.** First instance of Stage 3, and a test case that the Stage 3
   statement must reproduce.
 
-## Stage 3: the defectless equality over complete discretely valued fields (next)
+## Stage 3: the defectless equality over complete discretely valued fields (done: equality)
 
 - **Statement.** If `K` is complete for a discrete (rank-one, `IsDiscrete`)
   valuation and `L/K` is finite, then
@@ -117,6 +118,12 @@ Difficulty: **S** (a few hundred lines), **M** (one substantial file),
      `inertiaDeg K L` agree with `Ideal.ramificationIdx` and
      `Ideal.inertiaDeg` of the maximal ideals. This connects the valuative and
      ideal-theoretic APIs.
+- **Implemented.** The equality is proved in
+  `FundamentalInequality/DiscreteComplete.lean`
+  (`ramificationIdx_mul_inertiaDeg_eq_finrank`), by successive approximation
+  over `K` without steps 1 and 2; `Examples/PadicSqrtP/Stage3.lean` checks it
+  on `ℚ_p(√p)`. The bridge lemma of step 4 to `Ideal.ramificationIdx` /
+  `Ideal.inertiaDeg` remains planned.
 - **Mathlib found.**
   - `Mathlib/Analysis/Normed/Unbundled/SpectralNorm.lean`:
     `spectralNorm_unique_field_norm_ext`, `spectralNorm_extends`, and the

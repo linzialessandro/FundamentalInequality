@@ -5,7 +5,7 @@ Authors: Demetrios Chiuratto Agourakis
 -/
 module
 
-public import Examples.PadicSqrtP.Valuation
+public import Examples.PadicSqrtP.Stage3
 
 /-!
 # The defectless extension `ℚ_p(√p)`

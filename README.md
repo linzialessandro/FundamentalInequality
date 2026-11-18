@@ -3,9 +3,11 @@
 Author: **Alessandro Linzi**
 
 This repository formalizes the simple fundamental inequality for a finite
-extension of valued fields in Lean 4. The statements live in
-`FundamentalInequality.lean`, in the `ValuativeExtension` namespace, on top of
-Mathlib's `ValuativeRel` / `ValuativeExtension` / `ValueGroupWithZero` API.
+extension of valued fields in Lean 4. The inequality lives in
+`FundamentalInequality.lean`; `FundamentalInequality/DiscreteComplete.lean`
+proves the defectless equality over complete discretely valued fields. Both
+modules use the `ValuativeExtension` namespace on top of Mathlib's
+`ValuativeRel` / `ValuativeExtension` / `ValueGroupWithZero` API.
 
 The development is a sandbox aimed at a Tau Ceti roadmap node. A draft of that
 node is `ROADMAP_NODE.md`. Nothing in this repository is a pull request against
@@ -57,6 +59,8 @@ permanent alias for it.
 | `exists_max_val_mul`, `valuation_independence` | Kuhlmann's Lemma 6.12 |
 | `finite_residueField_extension`, `finite_valueGroup_quotient` | finiteness |
 | `ramificationIdx_mul_inertiaDeg_le_finrank` (alias `fundamental_inequality`) | Kuhlmann's Lemma 6.13 |
+| `span_eq_top_of_completeSpace` | successive-approximation spanning over a complete discrete base |
+| `ramificationIdx_mul_inertiaDeg_eq_finrank` | `e f = [L:K]` over a complete discrete rank-at-most-one base |
 
 The middle factor of `ramificationIdx_mul_ramificationIdx` is `ramificationIdx K F`, the
 index in `(ValueGroupWithZero F)ˣ`, transported into `(ValueGroupWithZero L)ˣ`
@@ -64,13 +68,14 @@ along `mapValueGroupWithZero F L` by `Subgroup.index_map_of_injective`.
 
 ## Scope
 
-The file proves the inequality for one valuative extension. It does not prove
-Ostrowski's sum over several extensions of one valuation, the defect, equality
-in the defectless case, or a comparison with `Ideal.ramificationIdx` and
-`Ideal.inertiaDeg`. The equality `e f = [L:K]` for finite extensions of
-nonarchimedean local fields is `TauCeti.ramificationIndex_mul_inertiaDegree`,
-owned by the local-fields roadmap, and is not restated here. The planned
-work beyond this scope is in [`ROADMAP.md`](ROADMAP.md).
+The library proves the inequality for one valuative extension and the equality
+`e f = [L:K]` when the base is complete, discrete, and rank at most one. It does
+not prove Ostrowski's sum over several extensions, henselianity or
+henselization results, uniqueness of extension as a new general theorem, the
+defect, or a comparison with `Ideal.ramificationIdx` and `Ideal.inertiaDeg`.
+For local fields the new equality overlaps with
+`TauCeti.ramificationIndex_mul_inertiaDegree`; Tau Ceti is neither imported nor
+restated. The planned work beyond this scope is in [`ROADMAP.md`](ROADMAP.md).
 
 ## References
 
@@ -93,7 +98,9 @@ backwards-compatible quadratic API.
 `Examples/PadicSqrtP/` is the Stage 2 contrast example.  For every prime `p`,
 it constructs the unique compatible spectral valuative relation on
 `ℚ_[p](√p)`, proves `[ℚ_[p](√p) : ℚ_[p]] = 2`, `e = 2`, and `f = 1`, and
-deduces `e f = [L : K]` directly from the fundamental inequality.
+deduces `e f = [L : K]` directly from the fundamental inequality.  Its short
+Stage 3 check also recovers the equality from the general complete-discrete
+theorem and derives `f = 1` again from `e = [L : K] = 2`.
 
 ## Building
 
