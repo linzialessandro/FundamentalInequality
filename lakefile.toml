@@ -16,7 +16,8 @@ rev = "7bb03b4c5313d552989ba5b1c6d3f0f436f65d73"
 
 [[lean_lib]]
 name = "FundamentalInequality"
-globs = ["FundamentalInequality.+"]
+# `.*` is Lake Glob.andSubmodules: the root and every submodule. `.+` excludes the root.
+globs = ["FundamentalInequality.*"]
 
 # Example modules live under Examples/ and are not part of the default library target.
 # Examples.Audit is deliberately not a root: it is an axiom-audit script, not a library module.
